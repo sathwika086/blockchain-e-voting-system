@@ -1,0 +1,24 @@
+{
+  "name": "evoting-blockchain",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "body-parser": "^2.2.2",
+    "cors": "^2.8.6",
+    "crypto-js": "^4.2.0",
+    "express": "^5.2.1",
+    "face-api.js": "^0.20.1",
+    "mongoose": "^9.2.4",
+    "nodemailer": "^8.0.2",
+    "otp-generator": "^4.0.1"
+  }
+}

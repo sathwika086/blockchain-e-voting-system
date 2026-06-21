@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Voting Login | Election Commission of India</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+</head>
+<body>
+
+    <div class="header">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/Emblem_of_India.svg/1200px-Emblem_of_India.svg.png" alt="Emblem of India">
+        <div class="header-text">
+            <h1>Election Commission of India</h1>
+        </div>
+    </div>
+    
+    <div class="subheader">Secure Voter Login | Two-Factor Authentication</div>
+
+    <div class="main-content">
+        <div class="card">
+            <h2>Voter Login</h2>
+            
+            <div class="form-group">
+                <label style="font-size: 0.85rem; font-weight: bold; color: #555;">Step 1: Account Verification</label>
+                <input type="email" id="email" placeholder="Registered Email ID">
+                <input type="password" id="password" placeholder="Password">
+                <button onclick="login()">Verify Credentials</button>
+            </div>
+
+            <div style="margin: 25px 0; border-top: 1px solid #eee; position: relative;">
+                <span style="position: absolute; top: -12px; left: 45%; background: #fff; padding: 0 10px; color: #999; font-size: 0.8rem; font-weight: bold;">AND</span>
+            </div>
+
+            <div class="form-group">
+                <label style="font-size: 0.85rem; font-weight: bold; color: #555;">Step 2: OTP Verification</label>
+                <input type="text" id="otp" placeholder="Enter 6-Digit OTP">
+                <button class="btn-secondary" onclick="verifyOTP()">Verify OTP & Authorize</button>
+            </div>
+
+            <p id="message" style="margin-top: 15px; font-weight: bold;"></p>
+            
+            <p style="margin-top: 25px; font-size: 0.9rem; border-top: 1px solid #f0f0f0; padding-top: 15px;">
+                New voter? <a href="register.html" style="color: #000080; font-weight: bold; text-decoration: none;">Register Now →</a>
+            </p>
+        </div>
+    </div>
+
+    <div class="footer">
+        &copy; 2026 Election Commission of India. All rights reserved. <br>
+        <small>IP Address logged for security. Unauthorized access attempts will be prosecuted.</small>
+    </div>
+
+    <script>
+        function login() {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            if(!email || !password) {
+                document.getElementById("message").innerText = "Please enter both email and password.";
+                document.getElementById("message").style.color = "red";
+                return;
+            }
+
+            fetch("/api/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password })
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById("message").innerText = data.message;
+                if (data.message === "Password verified") {
+                    document.getElementById("message").style.color = "green";
+                    localStorage.setItem("email", email);
+                    sendOTP(email);
+                } else {
+                    document.getElementById("message").style.color = "red";
+                }
+            })
+            .catch(err => console.error("Login Error:", err));
+        }
+
+        function sendOTP(email) {
+            fetch("/api/send-otp", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email })
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById("message").innerText = "OTP sent to your email.";
+            });
+        }
+
+        function verifyOTP() {
+            const email = localStorage.getItem("email");
+            const otp = document.getElementById("otp").value;
+
+            if(!otp) {
+                document.getElementById("message").innerText = "Please enter the OTP.";
+                return;
+            }
+
+            fetch("/api/verify-otp", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, otp })
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById("message").innerText = data.message;
+                if (data.message === "OTP verified successfully") {
+                    window.location.href = "vote.html";
+                }
+            });
+        }
+    </script>
+</body>
+</html>

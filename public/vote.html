@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cast Your Vote | Election Commission of India</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="header">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/Emblem_of_India.svg/1200px-Emblem_of_India.svg.png" alt="Emblem">
+        <div class="header-text"><h1>Election Commission of India</h1></div>
+    </div>
+    
+    <div class="subheader">Electronic Voting Machine (EVM) | Blockchain Secured</div>
+
+    <div class="main-content">
+        <div class="card" style="max-width: 800px;">
+            <h2>Digital Ballot Paper</h2>
+            
+            <div class="candidate-card">
+                <div class="candidate-info">
+                    <span class="candidate-name">Candidate 1</span>
+                    <span class="party-name">BJP</span>
+                </div>
+                <button class="vote-btn" onclick="vote('BJP')">VOTE</button>
+            </div>
+
+            <div class="candidate-card">
+                <div class="candidate-info">
+                    <span class="candidate-name">Candidate 2</span>
+                    <span class="party-name">Congress</span>
+                </div>
+                <button class="vote-btn" onclick="vote('Congress')">VOTE</button>
+            </div>
+
+            <div class="candidate-card">
+                <div class="candidate-info">
+                    <span class="candidate-name">Candidate 3</span>
+                    <span class="party-name">BRS</span>
+                </div>
+                <button class="vote-btn" onclick="vote('BRS')">VOTE</button>
+            </div>
+
+            <div id="result-container" style="display: none; margin-top: 30px; padding: 20px; background: #f8f9fa; border-left: 5px solid #FF9933;">
+                <h3 id="status-text"></h3>
+                <div id="hash-display"></div>
+                <button onclick="window.location.href='index.html'" style="margin-top: 20px;">Exit</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Defining the function globally at the window level
+        window.vote = async function(candidate) {
+            const email = localStorage.getItem("email");
+            if (!email) {
+                alert("Session expired. Please login again.");
+                window.location.href = "login.html";
+                return;
+            }
+
+            try {
+                const response = await fetch("/api/vote", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, candidate })
+                });
+                
+                const data = await response.json();
+                
+                const container = document.getElementById("result-container");
+                const statusText = document.getElementById("status-text");
+                const hashDisplay = document.getElementById("hash-display");
+
+                container.style.display = "block";
+                statusText.innerText = data.message;
+
+                if (data.hash) {
+                    hashDisplay.innerHTML = `<p><strong>Hash:</strong> ${data.hash}</p>`;
+                }
+            } catch (err) {
+                console.error("Voting Error:", err);
+                alert("Failed to reach server.");
+            }
+        };
+    </script>
+</body>
+</html>

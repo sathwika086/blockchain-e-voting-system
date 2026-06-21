@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>E-Voting System - Register</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+</head>
+<body>
+
+    <div class="header">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/Emblem_of_India.svg/1200px-Emblem_of_India.svg.png" alt="Emblem of India">
+        <div class="header-text">
+            <h1>Election Commission of India</h1>
+        </div>
+    </div>
+    
+    <div class="subheader">National Voter Service Portal | Secure Registration</div>
+
+    <div class="main-content">
+        <div class="card">
+            <h2>Voter Registration</h2>
+            
+            <div class="form-group">
+                <input id="name" type="text" placeholder="Full Name (as per Aadhaar)">
+                <input id="email" type="email" placeholder="Email Address">
+                <input id="password" type="password" placeholder="Create Password">
+            </div>
+
+            <div style="margin-top: 20px; border: 1px dashed #ccc; padding: 15px; border-radius: 8px; background: #fafafa;">
+                <h3 style="margin-top: 0; font-size: 1rem; color: #555;">Biometric Face Registration</h3>
+                <video id="video" autoplay muted style="width: 100%; border-radius: 4px; border: 2px solid #000080;"></video>
+                <button class="btn-secondary" type="button" onclick="captureFace()">Capture Face</button>
+                <p id="faceStatus" style="font-size: 0.85rem; color: #666; margin-top: 10px;">Starting camera...</p>
+            </div>
+
+            <button onclick="register()" style="margin-top: 25px; font-size: 1.2rem; background-color: #138808;">Complete Registration</button>
+            
+            <p id="message"></p>
+            
+            <p style="margin-top: 20px; font-size: 0.9rem;">
+                Already have an account? <a href="login.html" style="color: #000080; font-weight: bold;">Login here</a>
+            </p>
+        </div>
+    </div>
+
+    <div class="footer">
+        &copy; 2026 Election Commission of India. All rights reserved. <br>
+        <small>Blockchain secured digital voting prototype.</small>
+    </div>
+
+    <script>
+        const video = document.getElementById("video")
+        let faceDescriptor = null
+        let modelsLoaded = false
+
+        // START CAMERA
+        async function startCamera(){
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({video:true})
+                video.srcObject = stream
+            } catch(error) {
+                document.getElementById("faceStatus").innerText = "Camera permission denied"
+            }
+        }
+
+        // LOAD FACE MODELS
+        async function loadModels(){
+            try {
+                document.getElementById("faceStatus").innerText = "Loading biometric models..."
+                // Ensure the path '/face-models' exists in your project public folder
+                await Promise.all([
+                    faceapi.nets.tinyFaceDetector.loadFromUri('/face-models'),
+                    faceapi.nets.faceLandmark68Net.loadFromUri('/face-models'),
+                    faceapi.nets.faceRecognitionNet.loadFromUri('/face-models')
+                ])
+                modelsLoaded = true
+                document.getElementById("faceStatus").innerText = "Models ready. Position your face and click Capture."
+            } catch(error) {
+                console.error("Model error:", error)
+                document.getElementById("faceStatus").innerText = "Error loading models. Check folder path."
+            }
+        }
+
+        window.onload = async function(){
+            await startCamera()
+            await loadModels()
+        }
+
+        async function captureFace(){
+            if(!modelsLoaded) return;
+            
+            document.getElementById("faceStatus").innerText = "Scanning..."
+            const options = new faceapi.TinyFaceDetectorOptions({ inputSize:160, scoreThreshold:0.5 })
+            const detection = await faceapi.detectSingleFace(video, options).withFaceLandmarks().withFaceDescriptor()
+
+            if(!detection){
+                document.getElementById("faceStatus").innerText = "No face detected. Please try again."
+                return
+            }
+            faceDescriptor = Array.from(detection.descriptor)
+            document.getElementById("faceStatus").innerText = "Face captured successfully ✅"
+            document.getElementById("faceStatus").style.color = "#138808"
+        }
+
+        function register(){
+            const name = document.getElementById("name").value
+            const email = document.getElementById("email").value
+            const password = document.getElementById("password").value
+
+            if(!name || !email || !password || !faceDescriptor){
+                document.getElementById("message").innerText = "All fields and Face ID are required."
+                document.getElementById("message").style.color = "red"
+                return
+            }
+
+            fetch("/api/register", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, email, password, faceDescriptor })
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById("message").innerText = data.message
+                if(data.message.includes("success")) {
+                    setTimeout(() => window.location.href = "login.html", 1500)
+                }
+            })
+        }
+    </script>
+</body>
+</html>
